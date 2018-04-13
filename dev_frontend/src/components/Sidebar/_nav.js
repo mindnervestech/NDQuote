@@ -8,6 +8,11 @@ export default {
         variant: 'info',
         text: 'NEW'
       }
-    }
+    },
+    // {
+    //   name: 'Login',
+    //   url: '/login',
+    //   icon: 'icon-speedometer'
+    // }
   ]
 };

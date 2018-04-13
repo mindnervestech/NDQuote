@@ -4,10 +4,16 @@ import {
   NavItem,
   NavbarToggler,
   NavbarBrand,
+  NavLink,
+  Badge
 } from 'reactstrap';
+import HeaderDropdown from './HeaderDropdown';
 
 class Header extends Component {
 
+constructor(props) {
+    super(props);
+  }
   sidebarToggle(e) {
     e.preventDefault();
     document.body.classList.toggle('sidebar-hidden');
@@ -38,9 +44,9 @@ class Header extends Component {
         <NavbarToggler className="d-md-down-none mr-auto" onClick={this.sidebarToggle}>
           <span className="navbar-toggler-icon"></span>
         </NavbarToggler>
-        <NavbarToggler className="d-md-down-none" onClick={this.asideToggle}>
-          <span className="navbar-toggler-icon"></span>
-        </NavbarToggler>
+        <Nav className="ml-auto" navbar>
+          <HeaderDropdown {...this.props}/>
+        </Nav>
       </header>
     );
   }

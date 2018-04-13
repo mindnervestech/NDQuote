@@ -13,7 +13,7 @@ class Full extends Component {
   render() {
     return (
       <div className="app">
-        <Header />
+        <Header {...this.props}/>
         <div className="app-body">
           <Sidebar {...this.props}/>
           <main className="main">
@@ -21,7 +21,7 @@ class Full extends Component {
             <Container fluid>
               <Switch>
                 <Route path="/dashboard" name="Dashboard" component={Dashboard}/>
-                <Redirect from="/" to="/dashboard"/>
+                <Redirect from="/" to="/login"/>
               </Switch>
             </Container>
           </main>

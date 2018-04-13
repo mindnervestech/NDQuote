@@ -35,7 +35,9 @@ class RowRenderer extends React.Component {
       idx: PropTypes.string.isRequired
     };
     this.state = {
-      propTypes : propTypes
+      propTypes : propTypes,
+      //baseUrl : 'http://localhost:7070/',
+      baseURL : 'http://45.33.31.20:7070/'
     }
   }
 
@@ -93,11 +95,13 @@ class Dashboard extends React.Component {
 
 
   onChange(e) {
+    let self = this;
   	const formData = new FormData();
 		formData.append('file',e.target.files[0]);
-		fetch('http://localhost:7070/upload', {
+		fetch( self.state.baseUrl + 'ndquote/api/upload', {
 		    method: 'POST',
-		    body: formData
+		    body: formData,
+        headers: { 'X-AUTH-TOKEN' : localStorage.getItem('token')}
 		}).then(function(res1) {
       if (!res1.ok) {
         self.createRows([]);
@@ -113,9 +117,10 @@ class Dashboard extends React.Component {
   }
 
   onChange1 (e) {
+    let self = this;
     const formData = new FormData();
     formData.append('file',e.target.files[0]);
-    fetch('http://localhost:7070/validatesignature', {
+    fetch( self.state.baseUrl + 'validatesignature', {
         method: 'POST',
         body: formData
     }).then(function(res1) {
