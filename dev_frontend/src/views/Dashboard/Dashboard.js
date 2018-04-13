@@ -35,9 +35,7 @@ class RowRenderer extends React.Component {
       idx: PropTypes.string.isRequired
     };
     this.state = {
-      propTypes : propTypes,
-      //baseUrl : 'http://localhost:7070/',
-      baseURL : 'http://45.33.31.20:7070/'
+      propTypes : propTypes
     }
   }
 
@@ -67,7 +65,9 @@ class Dashboard extends React.Component {
 		this._rows = [];
     this.state ={
       file:null,
-      errorMessage : null
+      errorMessage : null,
+      //baseUrl : 'http://localhost:7070/',
+      baseURL : 'http://45.33.31.20:7070/'
     };
 
   }
@@ -95,6 +95,7 @@ class Dashboard extends React.Component {
 
 
   onChange(e) {
+
   	const formData = new FormData();
 		formData.append('file',e.target.files[0]);
 		fetch( self.state.baseURL + 'ndquote/api/upload', {
