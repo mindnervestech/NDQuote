@@ -102,6 +102,7 @@ class Login extends Component {
   }
   
   loadUserInfo (id) {
+    let self =  this;
     fetch( self.state.baseURL + 'ndquote/api/profile/'+ id, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' ,'X-AUTH-TOKEN' : localStorage.getItem('token')}
