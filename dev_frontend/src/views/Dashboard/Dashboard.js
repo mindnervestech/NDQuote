@@ -95,10 +95,9 @@ class Dashboard extends React.Component {
 
 
   onChange(e) {
-    let self = this;
   	const formData = new FormData();
 		formData.append('file',e.target.files[0]);
-		fetch( self.state.baseUrl + 'ndquote/api/upload', {
+		fetch( self.state.baseURL + 'ndquote/api/upload', {
 		    method: 'POST',
 		    body: formData,
         headers: { 'X-AUTH-TOKEN' : localStorage.getItem('token')}
@@ -117,10 +116,9 @@ class Dashboard extends React.Component {
   }
 
   onChange1 (e) {
-    let self = this;
     const formData = new FormData();
     formData.append('file',e.target.files[0]);
-    fetch( self.state.baseUrl + 'validatesignature', {
+    fetch( self.state.baseURL + 'validatesignature', {
         method: 'POST',
         body: formData
     }).then(function(res1) {

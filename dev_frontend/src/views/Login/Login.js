@@ -38,7 +38,7 @@ class Login extends Component {
       username: this.state.username,
       password: this.state.password,
     };
-    fetch( self.state.baseUrl + 'user/login', {
+    fetch( self.state.baseURL + 'user/login', {
         method: 'POST',
         body: JSON.stringify(data),
         headers: { 'Content-Type': 'application/json' }
@@ -80,7 +80,7 @@ class Login extends Component {
       lastName : response.profileObj.familyName,
       email : response.profileObj.email
     };
-    fetch( self.state.baseUrl + 'user/sociallogin', {
+    fetch( self.state.baseURL + 'user/sociallogin', {
         method: 'POST',
         body: JSON.stringify(data),
         headers: { 'Content-Type': 'application/json' }
@@ -102,7 +102,7 @@ class Login extends Component {
   }
   
   loadUserInfo (id) {
-    fetch( self.state.baseUrl + 'ndquote/api/profile/'+ id, {
+    fetch( self.state.baseURL + 'ndquote/api/profile/'+ id, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' ,'X-AUTH-TOKEN' : localStorage.getItem('token')}
     }).then(function(res1) {
