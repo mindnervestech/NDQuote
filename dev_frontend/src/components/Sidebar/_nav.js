@@ -1,13 +1,9 @@
 export default {
   items: [
     {
-      name: 'Dashboard',
-      url: '/dashboard',
+      name: 'SELECIONE XML',
+      url: '/selection',
       icon: 'icon-speedometer',
-      badge: {
-        variant: 'info',
-        text: 'NEW'
-      }
     },
     // {
     //   name: 'Login',

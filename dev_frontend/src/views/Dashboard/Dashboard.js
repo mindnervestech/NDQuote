@@ -143,7 +143,7 @@ class Dashboard extends React.Component {
           </Col>
         </FormGroup>
         <Row>
-          <span>Here{this.errorMessage}</span>
+          <span>{this.errorMessage}</span>
         </Row>
       	<Row>
 	        <ReactDataGrid
