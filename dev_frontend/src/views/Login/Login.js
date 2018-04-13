@@ -33,20 +33,19 @@ class Login extends Component {
 
   handleSubmit(event) {
     let self = this;
-    console.log('A name was submitted: ' , this.state ,event.target);
     event.preventDefault();
     let data =  {
       username: this.state.username,
       password: this.state.password,
     };
-    fetch( tself.state.baseUrl + 'user/login', {
+    fetch( self.state.baseUrl + 'user/login', {
         method: 'POST',
         body: JSON.stringify(data),
         headers: { 'Content-Type': 'application/json' }
     }).then(function(res1) {
       if (!res1.ok) {
         if (error.message) {
-          self.setState({errorMessage :error.message});
+          self.setState({ errorMessage :error.message });
         } 
       }
       return res1.json();
@@ -81,7 +80,7 @@ class Login extends Component {
       lastName : response.profileObj.familyName,
       email : response.profileObj.email
     };
-    fetch( tself.state.baseUrl + 'user/sociallogin', {
+    fetch( self.state.baseUrl + 'user/sociallogin', {
         method: 'POST',
         body: JSON.stringify(data),
         headers: { 'Content-Type': 'application/json' }
@@ -103,7 +102,7 @@ class Login extends Component {
   }
   
   loadUserInfo (id) {
-    fetch( tself.state.baseUrl + 'ndquote/api/profile/'+ id, {
+    fetch( self.state.baseUrl + 'ndquote/api/profile/'+ id, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' ,'X-AUTH-TOKEN' : localStorage.getItem('token')}
     }).then(function(res1) {
