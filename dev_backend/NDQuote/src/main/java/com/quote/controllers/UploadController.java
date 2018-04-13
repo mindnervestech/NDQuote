@@ -13,10 +13,18 @@ import com.quote.vm.MessageVM;
 
 
 @RestController
+@RequestMapping("/ndquote/api")
 public class UploadController {
 
 	@Autowired
 	UploadService uploadService;
+	
+	
+	@RequestMapping(value = "/start", method = RequestMethod.GET)
+	@ResponseBody
+	public MessageVM uploadZip() {
+		return null;
+	}
 	
 	@RequestMapping(value = "/upload", method = RequestMethod.POST)
 	@ResponseBody

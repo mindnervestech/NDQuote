@@ -6,19 +6,17 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-import org.w3c.dom.Element;
 import javax.xml.crypto.MarshalException;
 import javax.xml.crypto.dsig.XMLSignature;
 import javax.xml.crypto.dsig.XMLSignatureException;
 import javax.xml.crypto.dsig.XMLSignatureFactory;
 import javax.xml.crypto.dsig.dom.DOMValidateContext;
-import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.io.FilenameUtils;
-import org.springframework.web.multipart.MultipartFile;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -48,7 +46,6 @@ public class ValidationData {
 		String extension = FilenameUtils.getExtension(file.getName());
 		System.out.println("File extension ::"+ extension);
 		if (extension.equalsIgnoreCase("xml") ) {
-			ByteArrayInputStream arrayInputStream = null;
 			FileInputStream fileInputStream = null;
 			try {
 				fileInputStream = new FileInputStream(filePath);
