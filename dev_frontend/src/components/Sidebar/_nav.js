@@ -1,14 +1,15 @@
 export default {
   items: [
     {
-      name: 'SELECIONE XML',
-      url: '/selection',
-      icon: 'icon-speedometer',
+      name: 'IMPORTAR XML',
+      url: '/dashboard',
+      icon: 'icon-cursor',
     },
-    // {
-    //   name: 'Login',
-    //   url: '/login',
-    //   icon: 'icon-speedometer'
-    // }
+    {
+      name: 'TOKENS',
+      url: '/tokens',
+      icon: 'icon-puzzle'
+    }
   ]
 };
+

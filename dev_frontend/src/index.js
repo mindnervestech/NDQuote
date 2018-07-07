@@ -19,12 +19,14 @@ import Full from './containers/Full/';
 
 // Views
 import Login from './views/Login/';
+import Loader from './components/Loader';
 
 ReactDOM.render((
   <HashRouter>
     <Switch>
-    	<Route exact path="/login" name="Login Page" component={Login}/>
+      <Route exact path="/login" name="Login Page" component={Login}/>
       <Route path="/" name="Home" component={Full}/>
     </Switch>
   </HashRouter>
+  
 ), document.getElementById('root'));

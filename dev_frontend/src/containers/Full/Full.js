@@ -8,6 +8,7 @@ import Aside from '../../components/Aside/';
 import Footer from '../../components/Footer/';
 
 import Dashboard from '../../views/Dashboard/';
+import Tokens from '../../views/Tokens/';
 
 class Full extends Component {
   render() {
@@ -20,6 +21,9 @@ class Full extends Component {
             <Breadcrumb />
             <Container fluid>
               <Switch>
+                /*<Route path="/tokens" name="Tokens" component={Tokens}/>*/
+                <Route exact  path="/tokens(/:tokenId)"  component={Tokens} /> 
+               
                 <Route path="/dashboard" name="Dashboard" component={Dashboard}/>
                 <Redirect from="/" to="/login"/>
               </Switch>
@@ -33,3 +37,6 @@ class Full extends Component {
 }
 
 export default Full;
+/*/* <Route  exact={true} path="/tokens/:id" render={(match) => (
+                  <Tokens token={match} {...props} />)
+                } />*/

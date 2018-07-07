@@ -4,7 +4,9 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -18,6 +20,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.io.FilenameUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.w3c.dom.Document;
@@ -28,6 +31,14 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
+import com.quote.entities.Tokens;
+import com.quote.entities.XMLDocument;
+import com.quote.entities.auth.AuthUser;
+import com.quote.repository.AuthUserRepository;
+import com.quote.repository.TokenRepository;
+import com.quote.repository.XMLDocumentRepository;
+import com.quote.utility.SendEmail;
+import com.quote.vm.EmailVM;
 import com.quote.vm.MessageVM;
 import com.quote.vm.NFEInfoVM;
 import com.quote.x509keyselector.X509KeySelector;
@@ -36,20 +47,32 @@ import com.quote.x509keyselector.X509KeySelector;
 @Service
 public class UploadService {
 
+	@Autowired
+	private SendEmail sendEmail;
+	
+	@Autowired
+	AuthUserRepository authUserRepository;
+	
+	@Autowired
+	XMLDocumentRepository xmlDocumentRepository;
+	@Autowired
+	TokenRepository tokenRepository;
 
-	public MessageVM upload( MultipartFile file) throws Exception {
+	
+	public MessageVM upload(Long userId, MultipartFile file) throws Exception {
 		String extension = FilenameUtils.getExtension(file.getOriginalFilename());
 		if (extension.equalsIgnoreCase("xml") ) {
-			return uploadXml(file);
+			return uploadXml(userId,file);
 		} else if (extension.equalsIgnoreCase("zip")) {
-			return uploadZip(file);
+			return uploadZip(userId,file);
 		} else {
 			throw new Exception("Please upload .xml or .zip file which contain .xml files.");
 		}
 		
 	}
 
-	public MessageVM uploadZip( MultipartFile file) {
+	public MessageVM uploadZip( Long userId, MultipartFile file) {
+		AuthUser user = authUserRepository.findOne(userId);
 		MessageVM messageVM = new MessageVM();
 		List<NFEInfoVM> nfeInfoList = new ArrayList<>();
 		try {
@@ -95,22 +118,85 @@ public class UploadService {
 					if (nNode.getNodeType() == Node.ELEMENT_NODE) {
 
 						Element eElement = (Element) nNode;
+						XMLDocument xmlDocument = new XMLDocument(); 
+						xmlDocument.setUser(user);
+						xmlDocument.setCreatedAt(new Date());
+						xmlDocument.setUpdatedAt(new Date());
 						NFEInfoVM infoVM =new NFEInfoVM(); 
+						Tokens token = new Tokens();
+						
 						String InfNFeId = eElement.getAttribute("Id");
 						infoVM.setInfNFeId(InfNFeId.replaceAll("NFe", ""));
+						xmlDocument.setInfNFeId(InfNFeId.replaceAll("NFe", ""));
+						
+						List<XMLDocument> xmlDocumentList = xmlDocumentRepository.findByInfNFeId(infoVM.getInfNFeId());
+						if (xmlDocumentList.size()>0) {
+							xmlDocument = xmlDocumentList.get(0);
+							if (xmlDocument.getToken() != null && xmlDocument.getToken().isAuthorised() ) {
+								infoVM.setAuthorised(true);
+								token = xmlDocument.getToken();
+							} else if (xmlDocument.getToken() != null) {
+								token  = xmlDocument.getToken();
+							}
+						}
+						xmlDocument.setnNF(Integer.parseInt(eElement.getElementsByTagName("nNF").item(0).getTextContent()));
+						xmlDocument.setxNome(eElement.getElementsByTagName("xNome").item(0).getTextContent());
+						
 						infoVM.setnNF(Integer.parseInt(eElement.getElementsByTagName("nNF").item(0).getTextContent()));
 						infoVM.setxNome(eElement.getElementsByTagName("xNome").item(0).getTextContent());
 						if(eElement.getElementsByTagName("dEmi").item(0) != null) {
 							infoVM.setdEmi(eElement.getElementsByTagName("dEmi").item(0).getTextContent());	
+							xmlDocument.setdEmi(eElement.getElementsByTagName("dEmi").item(0).getTextContent());
 						}
-
+                        System.out.println("QQQQ Dest @@@@ :: \n" + eElement.getAttribute("dest")); 
 						if (isValidSignature(arrayOutputStream)) {
+							String emailNode = eElement.getElementsByTagName("email").item(0).getTextContent();
+							String[] emailNodeList = null;
+							if (emailNode != null) {
+								emailNodeList = emailNode.split(";");
+							}
+							EmailVM emailVM = new EmailVM();
+							UUID idOne = UUID.randomUUID();
+							emailVM.setFrom("admin@mail.com");
+							//emailVM.setTo(emailNodeList[0]);
+							emailVM.setTo("ranajitmahakunde2010@gmail.com");
+							String mailBody = "<div>Hi,\n"+ idOne + "</div>"; 
+							emailVM.setMailBody(mailBody);
+							emailVM.setSubject("XML validation");
+							sendEmail.sendEmail(emailVM);
+							
+							if(eElement.getElementsByTagName("CNPJ").item(0) != null) {
+								token.setDocument(eElement.getElementsByTagName("CNPJ").item(0).getTextContent());
+								xmlDocument.setDocument(eElement.getElementsByTagName("CNPJ").item(0).getTextContent());
+							} else if(eElement.getElementsByTagName("CPF").item(0) != null) {
+								token.setDocument(eElement.getElementsByTagName("CPF").item(0).getTextContent());
+								xmlDocument.setDocument(eElement.getElementsByTagName("CPF").item(0).getTextContent());
+							}
+							
+
+							token.setRecipient(eElement.getElementsByTagName("xNome").item(0).getTextContent());
+							token.setCreatedAt(new Date());
+							token.setUpdatedAt(new Date());
+						
+							token.setEmail(emailNodeList[0]);
+							token.setToken(""+idOne);
+							token.setUser(user);
+							token.setAuthorised(false);
 							infoVM.setStatus("Valid");
+							xmlDocument.setStatus("Valid");
+							xmlDocument.setToken(token);
+							if (!infoVM.isAuthorised()) {
+								tokenRepository.save(token);
+								xmlDocumentRepository.save(xmlDocument);
+							}
+							infoVM.setId(xmlDocument.getId());
 						} else {
 							infoVM.setStatus("Invalid");
+							xmlDocument.setStatus("Invalid");
 						}
 
 						nfeInfoList.add(infoVM);
+					
 					}
 				}
 				arrayOutputStream.close();
@@ -138,7 +224,9 @@ public class UploadService {
 	}
 
 
-	public MessageVM uploadXml( MultipartFile file) {
+	public MessageVM uploadXml(Long userId, MultipartFile file) {
+		System.out.println("userId :: " + userId);
+		AuthUser user = authUserRepository.findOne(userId);
 		MessageVM messageVM = new MessageVM();
 		List<NFEInfoVM> nfeInfoList = new ArrayList<>();
 		try {
@@ -164,29 +252,98 @@ public class UploadService {
 				if (nNode.getNodeType() == Node.ELEMENT_NODE) {
 					Element eElement = (Element) nNode;
 				}		
-
 			}
 
 			NodeList nList = doc.getElementsByTagName("infNFe");
 			for (int temp = 0; temp < nList.getLength(); temp++) {
 				Node nNode = nList.item(temp);
+				Tokens token = new Tokens();
+				XMLDocument xmlDocument = new XMLDocument();
+				
 				if (nNode.getNodeType() == Node.ELEMENT_NODE) {
-
+					
 					Element eElement = (Element) nNode;
 					NFEInfoVM infoVM =new NFEInfoVM(); 
 					String InfNFeId = eElement.getAttribute("Id");
 					infoVM.setInfNFeId(InfNFeId.replaceAll("NFe", ""));
+					List<XMLDocument> xmlDocumentList = xmlDocumentRepository.findByInfNFeId(infoVM.getInfNFeId());
+					if (xmlDocumentList.size()>0) {
+						xmlDocument = xmlDocumentList.get(0);
+						if (xmlDocument.getToken() != null && xmlDocument.getToken().isAuthorised() ) {
+							infoVM.setAuthorised(true);
+							token = xmlDocument.getToken();
+						}  else if (xmlDocument.getToken() != null) {
+							token  = xmlDocument.getToken();
+						}
+						
+					}
+						
+					
 					infoVM.setnNF(Integer.parseInt(eElement.getElementsByTagName("nNF").item(0).getTextContent()));
 					infoVM.setxNome(eElement.getElementsByTagName("xNome").item(0).getTextContent());
+					
+					xmlDocument.setInfNFeId(InfNFeId.replaceAll("NFe", ""));
+					xmlDocument.setnNF(Integer.parseInt(eElement.getElementsByTagName("nNF").item(0).getTextContent()));
+					xmlDocument.setxNome(eElement.getElementsByTagName("xNome").item(0).getTextContent());
+					
 					if(eElement.getElementsByTagName("dEmi").item(0) != null) {
 						infoVM.setdEmi(eElement.getElementsByTagName("dEmi").item(0).getTextContent());	
+						xmlDocument.setdEmi(eElement.getElementsByTagName("dEmi").item(0).getTextContent());	
 					}
+					
+					System.out.println("QQQQ Dest @@@@ :: \n" + eElement.getElementsByTagName("email").item(0).getTextContent()); 
+						
 					if (isValidSignature(arrayOutputStream)) {
+						
+						String emailNode = eElement.getElementsByTagName("email").item(0).getTextContent();
+						String[] emailNodeList = null;
+						if (emailNode != null) {
+							emailNodeList = emailNode.split(";");
+						}
+						xmlDocument.setStatus("Valid");
+						EmailVM emailVM = new EmailVM();
+						UUID idOne = UUID.randomUUID();
+						emailVM.setFrom("admin@mail.com");
+						//emailVM.setTo(emailNodeList[0]);
+						emailVM.setTo("ranajitmahakunde2010@gmail.com");
+						String mailBody = "<div>Hi,\n"+ idOne + "</div>"; 
+						emailVM.setMailBody(mailBody);
+						emailVM.setSubject("XML validation");
+						if (!infoVM.isAuthorised())
+						 sendEmail.sendEmail(emailVM);
+
+						if(eElement.getElementsByTagName("CNPJ").item(0) != null) {
+							token.setDocument(eElement.getElementsByTagName("CNPJ").item(0).getTextContent());
+							xmlDocument.setDocument(eElement.getElementsByTagName("CNPJ").item(0).getTextContent());
+						} else if(eElement.getElementsByTagName("CPF").item(0) != null) {
+							token.setDocument(eElement.getElementsByTagName("CPF").item(0).getTextContent());
+							xmlDocument.setDocument(eElement.getElementsByTagName("CPF").item(0).getTextContent());
+						}
+
+						token.setRecipient(eElement.getElementsByTagName("xNome").item(0).getTextContent());
+						token.setCreatedAt(new Date());
+						token.setUpdatedAt(new Date());
+					
+						token.setEmail(emailNodeList[0]);
+						token.setToken(""+idOne);
+						token.setUser(user);
+						token.setAuthorised(false);
+							
+						xmlDocument.setToken(token);
+						xmlDocument.setUser(user);
+						xmlDocument.setCreatedAt(new Date());
+						xmlDocument.setUpdatedAt(new Date());
+						if (!infoVM.isAuthorised()) {
+							tokenRepository.save(token);
+							xmlDocumentRepository.save(xmlDocument);
+						}
+						infoVM.setId(xmlDocument.getId());
 						infoVM.setStatus("Valid");
 					} else {
 						infoVM.setStatus("Invalid");
+						xmlDocument.setStatus("Invalid");
 					}
-
+					
 					nfeInfoList.add(infoVM);
 				}
 			}
@@ -292,8 +449,6 @@ public class UploadService {
 
 					// Validate the XMLSignature.
 					System.out.println("validate :: " +  signature.validate(valContext));
-
-
 				} catch (MarshalException e) {
 					System.out.println("validate :: MarshalException" );
 					e.printStackTrace();
@@ -301,7 +456,6 @@ public class UploadService {
 					System.out.println("validate :: XMLSignatureException" );
 					e.printStackTrace();
 				}
-
 			} catch (ParserConfigurationException e) {
 				System.out.println("validate :: ParserConfigurationException" );
 				e.printStackTrace();
@@ -316,5 +470,30 @@ public class UploadService {
 
 		}
 		return null;
+	}
+
+	public MessageVM getUploadedDocument(Long userId) {
+		AuthUser user = authUserRepository.findOne(userId);
+		MessageVM messageVm = new MessageVM();
+		List< XMLDocument>  xmlDocumentList = xmlDocumentRepository.findByUser(user);
+		List<NFEInfoVM> nfeInfoVMList = new ArrayList<>();
+		for (XMLDocument xmlDocument : xmlDocumentList) {
+			Tokens token = xmlDocument.getToken();
+			NFEInfoVM vm = new NFEInfoVM();
+			vm.setId(xmlDocument.getId());
+			vm.setdEmi(xmlDocument.getdEmi());
+			vm.setInfNFeId(xmlDocument.getInfNFeId());
+			vm.setnNF(xmlDocument.getnNF());
+			vm.setStatus(xmlDocument.getStatus());
+			vm.setxNome(xmlDocument.getxNome());
+			if (token != null) {
+				vm.setAuthorised(token.isAuthorised());
+			} else {
+				vm.setAuthorised(false);	
+			}
+			nfeInfoVMList.add(vm);	
+		}
+		messageVm.setData(nfeInfoVMList);
+		return messageVm;
 	}
 }

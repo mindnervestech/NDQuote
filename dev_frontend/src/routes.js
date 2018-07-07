@@ -1,5 +1,7 @@
 const routes = {
-  '/': 'Home',
-  '/dashboard': 'Dashboard'
+  '/': 'Inicio',
+  '/dashboard': 'Importar XML',
+  '/tokens':'Tokens',
+  '/tokens/:id':'Tokens'
 };
 export default routes;

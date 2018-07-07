@@ -3,6 +3,9 @@ import {Container, Row, Col, CardGroup, Card, CardBody, Button, Input, InputGrou
 import fetch from 'node-fetch';
 import FacebookLogin from 'react-facebook-login';
 import GoogleLogin from 'react-google-login';
+import Notifications, {notify} from 'react-notify-toast';
+import Loader from '../../components/Loader';
+import LoginService from "../../Services/LoginService.js";
 
 class Login extends Component {
   constructor(props) {
@@ -10,8 +13,10 @@ class Login extends Component {
     this.state = {
       username: "",
       password:"",
-      //baseUrl : 'http://localhost:7070/',
+      //baseURL : 'http://localhost:7070/',
       baseURL : 'http://45.33.31.20:7070/',
+      errorMessage: null,
+      fetchInProgress: false
       
     };
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -26,8 +31,6 @@ class Login extends Component {
   }
 
   onLogin () {
-
-    console.log(" Login :: ", this.props ); 
     this.props.history.push('/dashboard');
   }
 
@@ -38,23 +41,22 @@ class Login extends Component {
       username: this.state.username,
       password: this.state.password,
     };
-    fetch( self.state.baseURL + 'user/login', {
-        method: 'POST',
-        body: JSON.stringify(data),
-        headers: { 'Content-Type': 'application/json' }
-    }).then(function(res1) {
-      if (!res1.ok) {
-        if (error.message) {
-          self.setState({ errorMessage :error.message });
-        } 
-      }
-      return res1.json();
-    }).then(function(response){
+    LoginService.login(data).then(response=> {
       localStorage.setItem('token' ,response.token);
       localStorage.setItem('userId' ,response.userId); 
-      self.loadUserInfo(response.userId);
+      //LoginService.loadUserInfo(response.userId);
       self.props.history.push('/dashboard');
-    });
+    }).catch(err=>{
+      console.log("err" ,err); 
+      let myColor = { background: '#0E1717', text: "#FFFFFF" };
+      if (err.message) {
+        notify.show(err.message, "error", 5000);
+        self.setState({ errorMessage : err.message });
+      }  else {
+        notify.show("Invalid username or password.", "error", 5000);
+        self.setState({ errorMessage : "Username or password is invalid." });
+      }
+    }); 
   }
 
   responseFacebook (response) {
@@ -102,25 +104,14 @@ class Login extends Component {
   }
   
   loadUserInfo (id) {
-    let self =  this;
-    fetch( self.state.baseURL + 'ndquote/api/profile/'+ id, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' ,'X-AUTH-TOKEN' : localStorage.getItem('token')}
-    }).then(function(res1) {
-      if (!res1.ok) {
-        if (error.message) {
-         
-        } 
-      }
-      return res1.json();
-    }).then(function(response){
-      console.log(response);
-    });
+   
   }
 
   render() {
     return (
       <div className="app flex-row align-items-center">
+        <Notifications />
+          {  this.state.fetchInProgress && <Loader {...this.props}  />  }    
         <Container>
           <Row className="justify-content-center">
             <Col md="8">
@@ -146,6 +137,11 @@ class Login extends Component {
                       </InputGroupAddon>
                       <Input type="password" name="password" value={this.state.password} placeholder="Password" onChange={this.handleChange} required/>
                     </InputGroup>
+                    <Row style={{marginTop:'-15px',marginBottom:'15px'}}>
+                      <Col md="12" style={{color:'red',fontSize:'12px'}}>
+                        {this.state.errorMessage}
+                      </Col>
+                      </Row>
                     <Row>
                       <Col xs="6">
                         <Button color="primary" className="px-4" >Login</Button>
@@ -190,5 +186,3 @@ class Login extends Component {
 }
 
 export default Login;
-
-///*<Button color="primary" className="mt-3" active>Register Now!</Button>*/

@@ -18,11 +18,10 @@ import {
   Input,
   Table
 } from 'reactstrap';
-import fetch from 'node-fetch';
 import  FormData from 'form-data';
 import moment from 'moment';
 import PropTypes from 'prop-types';
-
+import XMLDocumentService from '../../Services/XMLDocumentService';
 var self;
 var style = {
 	"textAlign" : 'right'
@@ -45,45 +44,123 @@ class RowRenderer extends React.Component {
     };
   };
 
+ 
+
   render() {
     return ( <span style={this.getRowStyle()}>{this.props.value}</span>);
   }
 }
 
+class AcaoRowRenderer extends React.Component {
+  constructor(props) {
+    super(props)
+    var propTypes = {
+      idx: PropTypes.string.isRequired
+    };
+    this.state = {
+      propTypes : propTypes
+    }
+    this.onItemClick =this.onItemClick.bind(this);
+  }
+
+  onItemClick() {
+    console.log("this.props :: ", this.props.value)
+    if (this.props.value && this.props.value.id)
+      self.props.history.push('/tokens/'+this.props.value.id);
+  }
+
+  getButtonStyle(data) {
+    if (this.props.value.id ) {
+      if ( data === "import") {
+        return {
+          display: this.props.value && this.props.value.authorised  ? '' : 'none'
+        };
+      }  else {
+        return {
+          cursor : 'pointer',
+          margin: '0px auto',
+          display: this.props.value && this.props.value.authorised  ? 'none' : ''
+        };
+      } 
+    } else {
+      return {
+          display:  'none' 
+        };
+    }
+  };
+  render() {
+    return ( 
+      <Row>
+       
+        <Col md="12" style={{textAlign:"center"}}>
+          <i className="fa fa-gear fa-lg" onClick={this.onItemClick} style={this.getButtonStyle('gerar')}></i>
+            <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
+               width="20px" height="20px" viewBox="0 0 128.000000 128.000000"
+               preserveAspectRatio="xMidYMid meet"  style={this.getButtonStyle('import')}>
+              <metadata>
+              Created by potrace 1.15, written by Peter Selinger 2001-2017
+              </metadata>
+              <g transform="translate(0.000000,128.000000) scale(0.100000,-0.100000)"
+              fill="#000000" stroke="none">
+              <path d="M606 1264 c-3 -9 -6 -167 -6 -352 l0 -336 -68 67 c-37 37 -74 67 -83
+              67 -20 0 -39 -20 -39 -40 0 -26 203 -220 230 -220 27 0 230 194 230 220 0 20
+              -19 40 -39 40 -9 0 -46 -30 -83 -67 l-68 -67 0 336 c0 185 -3 343 -6 352 -4 9
+              -18 16 -34 16 -16 0 -30 -7 -34 -16z"/>
+              <path d="M167 893 c-4 -3 -7 -206 -7 -450 l0 -443 480 0 480 0 -2 448 -3 447
+              -157 3 -158 3 0 -36 0 -35 125 0 125 0 0 -380 0 -380 -410 0 -410 0 0 380 0
+              380 125 0 125 0 0 35 0 35 -153 0 c-85 0 -157 -3 -160 -7z"/>
+              </g>
+            </svg>
+        </Col>
+      </Row>
+    );
+  }
+}
+
+
 class Dashboard extends React.Component {
 	constructor(props, context) {
 	  super(props, context);
-
+    if (!localStorage.getItem('userId') ) {
+      props.history.push('/login');
+    }
    // this.createRows = this.createRows.bind(this);
 	  self = this;
     this._columns = [
-      { key: 'infNFeId', name: 'XML' , resizable: true  },
-      { key: 'nNF', name: 'NF' ,resizable: true},
-      { key: 'dEmi', name: 'EMISSAO' ,resizable: true },
-      { key: 'xNome', name: 'EMITENTE',resizable: true },
-      { key: 'status', name: 'status' ,resizable: true , formatter : RowRenderer} ];
+      { key: 'infNFeId', name: 'Chave da NFe' , resizable: true  },
+      { key: 'nNF', name: 'NFe' ,resizable: true ,width : 80},
+      { key: 'dEmi', name: 'Emissão' ,resizable: true ,width : 130},
+      { key: 'xNome', name: 'Emitente',resizable: true },
+      { key: 'status', name: 'Status' ,resizable: true , formatter : RowRenderer,width : 80},
+      { key: 'authorised' , name: 'Ação', resizable: true,width : 140,formatter : AcaoRowRenderer } ];
 		this._rows = [];
     this.state ={
       file:null,
       errorMessage : null,
-      //baseUrl : 'http://localhost:7070/',
-      baseURL : 'http://45.33.31.20:7070/'
-    };
-
+      userId : localStorage.getItem('userId')
+    }; 
+    this.loadData();
   }
-
+  loadData() {
+    XMLDocumentService.getDocumentData( self.state.userId ).then(response=>{
+      self.createRows(response.data);
+    }).catch(error=>{
+      console.log(error);
+      self.createRows([]);
+    }); 
+  }
   createRows (data) {
     let rows = [];
     for (let i = 0; i < data.length; i++) {
       rows.push({
       	infNFeId : data[i].infNFeId,
       	nNF : data[i].nNF,
-      	dEmi : data[i].dEmi ? moment(data[i].dEmi).format('L'): "",
+      	dEmi : data[i].dEmi ? moment(data[i].dEmi).format('DD/MM/YYYY HH:mm'): "",
       	xNome : data[i].xNome,
-      	status : data[i].status
+      	status : data[i].status,
+        authorised:data[i]
       });
     }
-   
     this._rows = rows;
     this.setState({rows: rows });
   };
@@ -91,60 +168,30 @@ class Dashboard extends React.Component {
   rowGetter(i) {
     return self._rows[i];
   };
-
-
-
+  
   onChange(e) {
-
-  	const formData = new FormData();
-		formData.append('file',e.target.files[0]);
-		fetch( self.state.baseURL + 'ndquote/api/upload', {
-		    method: 'POST',
-		    body: formData,
-        headers: { 'X-AUTH-TOKEN' : localStorage.getItem('token')}
-		}).then(function(res1) {
-      if (!res1.ok) {
-        self.createRows([]);
-        if (error.message) {
-          self.setState({errorMessage :error.message});
-        } 
-      }
-      return res1.json();
-    }).then(function(response){
-      console.log(response);
-    	self.createRows(response.data);
-    });
-  }
-
-  onChange1 (e) {
-    const formData = new FormData();
-    formData.append('file',e.target.files[0]);
-    fetch( self.state.baseURL + 'validatesignature', {
-        method: 'POST',
-        body: formData
-    }).then(function(res1) {
-        return res1.json();
-    }).then(function(response){
-      self.createRows(response.data)
-    }).catch((error) => {
+    XMLDocumentService.documentUpload( self.state.userId ,e.target.files[0]).then(response=>{
+      self.createRows(response.data);
+    }).catch(error=>{
       console.log(error);
-    });
+      self.createRows([]);
+    }); 
   }
-  render() {
 
+  render() {
     return (
       <div className="animated fadeIn">
-        <FormGroup row>
-          <Col md="5" style={style}>
-            <Label htmlFor="file-input">SELECIONE XML DA NFE : </Label>
-          </Col>
-          <Col xs="12" md="7">
-            <Input type="file" id="file-input" name="file-input" onChange={this.onChange}/>
-          </Col>
-        </FormGroup>
+        <Row>
+            <Label htmlFor="file-input">Selecione XML : </Label>
+            <Col  style={style}>
+              <Input type="file" id="file-input" name="file-input"  onChange={this.onChange}/>
+            </Col>
+        </Row>
         <Row>
           <span>{this.errorMessage}</span>
         </Row>
+        <FormGroup> 
+        </FormGroup> 
       	<Row>
 	        <ReactDataGrid
 	        	columns={this._columns}

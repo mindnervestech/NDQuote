@@ -1,13 +1,13 @@
 package com.quote.vm;
 
 public class NFEInfoVM {
-
+    private Long id;
 	private String infNFeId;
 	private int nNF;
 	private String xNome;
 	private String dEmi;
 	private String status;
-	
+	private boolean authorised; 
 	public String getStatus() {
 		return status;
 	}
@@ -37,5 +37,17 @@ public class NFEInfoVM {
 	}
 	public void setdEmi(String dEmi) {
 		this.dEmi = dEmi;
+	}
+	public boolean isAuthorised() {
+		return authorised;
+	}
+	public void setAuthorised(boolean authorised) {
+		this.authorised = authorised;
+	}
+	public Long getId() {
+		return id;
+	}
+	public void setId(Long id) {
+		this.id = id;
 	}
 }

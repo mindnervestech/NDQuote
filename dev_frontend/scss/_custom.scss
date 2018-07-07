@@ -1,1 +1,19 @@
 // Here you can add other styles
+
+
+.loader {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    text-align: center;
+    background: #a7a3a3;
+    z-index: 1;
+    font-size: 31px;
+}
+
+.loader-data{   
+    top: 43%;
+    width: 100%;
+    position: absolute;
+    text-align: center;
+}

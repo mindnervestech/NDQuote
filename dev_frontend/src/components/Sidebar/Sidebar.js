@@ -12,7 +12,6 @@ class Sidebar extends Component {
 
   constructor(props) {
     super(props);
-
     this.handleClick = this.handleClick.bind(this);
     this.activeRoute = this.activeRoute.bind(this);
     this.hideMobile = this.hideMobile.bind(this);

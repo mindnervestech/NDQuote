@@ -1,6 +1,7 @@
 package com.quote.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -26,15 +27,21 @@ public class UploadController {
 		return null;
 	}
 	
-	@RequestMapping(value = "/upload", method = RequestMethod.POST)
+	@RequestMapping(value = "/{userId}/upload", method = RequestMethod.POST)
 	@ResponseBody
-	public MessageVM uploadZip(@RequestParam("file") MultipartFile file) throws Exception {
-		return uploadService.upload(file);
+	public MessageVM uploadZip(@RequestParam("file") MultipartFile file,@PathVariable Long userId) throws Exception {
+		return uploadService.upload(userId,file);
 	}
 	
 	@RequestMapping(value = "/validatesignature", method = RequestMethod.POST)
 	@ResponseBody
 	public MessageVM validateSignature(@RequestParam("file") MultipartFile file) {
 		return uploadService.checkValidSignature(file);
+	}
+	
+	@RequestMapping(value = "/document/{userId}", method = RequestMethod.GET)
+	@ResponseBody
+	public MessageVM getUploadedDocument(@PathVariable Long userId) {
+		return uploadService.getUploadedDocument(userId);
 	}
 }
