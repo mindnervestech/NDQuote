@@ -39,6 +39,7 @@ public class XMLDocument {
 	@Column(name="demi")
 	private String dEmi;
     private String status;
+	private String email;
 	private String document;
 	private Date createdAt;
 	private Date updatedAt;
@@ -108,6 +109,12 @@ public class XMLDocument {
 	}
 	public void setToken(Tokens token) {
 		this.token = token;
+	}
+	public String getEmail() {
+		return email;
+	}
+	public void setEmail(String email) {
+		this.email = email;
 	}
 	
 }

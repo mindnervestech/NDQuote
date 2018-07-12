@@ -128,8 +128,21 @@ public class UploadService {
 						String InfNFeId = eElement.getAttribute("Id");
 						infoVM.setInfNFeId(InfNFeId.replaceAll("NFe", ""));
 						xmlDocument.setInfNFeId(InfNFeId.replaceAll("NFe", ""));
+						String document = "";
+						if(eElement.getElementsByTagName("CNPJ").item(0) != null) {
+							document = eElement.getElementsByTagName("CNPJ").item(0).getTextContent();
+						} else if(eElement.getElementsByTagName("CPF").item(0) != null) {
+							document = eElement.getElementsByTagName("CPF").item(0).getTextContent();
+						}
+						String emailNode = eElement.getElementsByTagName("email").item(0).getTextContent();
+						String[] emailNodeList = null;
+						if (emailNode != null) {
+							emailNodeList = emailNode.split(";");
+						}
 						
-						List<XMLDocument> xmlDocumentList = xmlDocumentRepository.findByInfNFeId(infoVM.getInfNFeId());
+						//List<XMLDocument> xmlDocumentList = xmlDocumentRepository.findByInfNFeId(infoVM.getInfNFeId());
+						List<XMLDocument> xmlDocumentList = xmlDocumentRepository.findByDocumentAndEmail(document, emailNodeList[0]);
+						
 						if (xmlDocumentList.size()>0) {
 							xmlDocument = xmlDocumentList.get(0);
 							if (xmlDocument.getToken() != null && xmlDocument.getToken().isAuthorised() ) {
@@ -150,11 +163,7 @@ public class UploadService {
 						}
                         System.out.println("QQQQ Dest @@@@ :: \n" + eElement.getAttribute("dest")); 
 						if (isValidSignature(arrayOutputStream)) {
-							String emailNode = eElement.getElementsByTagName("email").item(0).getTextContent();
-							String[] emailNodeList = null;
-							if (emailNode != null) {
-								emailNodeList = emailNode.split(";");
-							}
+							
 							EmailVM emailVM = new EmailVM();
 							UUID idOne = UUID.randomUUID();
 							emailVM.setFrom("admin@mail.com");
@@ -179,6 +188,7 @@ public class UploadService {
 							token.setUpdatedAt(new Date());
 						
 							token.setEmail(emailNodeList[0]);
+							xmlDocument.setEmail(emailNodeList[0]);
 							token.setToken(""+idOne);
 							token.setUser(user);
 							token.setAuthorised(false);
@@ -264,9 +274,22 @@ public class UploadService {
 					
 					Element eElement = (Element) nNode;
 					NFEInfoVM infoVM =new NFEInfoVM(); 
+					
 					String InfNFeId = eElement.getAttribute("Id");
 					infoVM.setInfNFeId(InfNFeId.replaceAll("NFe", ""));
-					List<XMLDocument> xmlDocumentList = xmlDocumentRepository.findByInfNFeId(infoVM.getInfNFeId());
+					String emailNode = eElement.getElementsByTagName("email").item(0).getTextContent();
+					String[] emailNodeList = null;
+					if (emailNode != null) {
+						emailNodeList = emailNode.split(";");
+					}
+					String document = "";
+					if(eElement.getElementsByTagName("CNPJ").item(0) != null) {
+						document = eElement.getElementsByTagName("CNPJ").item(0).getTextContent();
+					} else if(eElement.getElementsByTagName("CPF").item(0) != null) {
+						document = eElement.getElementsByTagName("CPF").item(0).getTextContent();
+					}
+					//List<XMLDocument> xmlDocumentList = xmlDocumentRepository.findByInfNFeId(infoVM.getInfNFeId());
+					List<XMLDocument> xmlDocumentList = xmlDocumentRepository.findByDocumentAndEmail(document, emailNodeList[0]);
 					if (xmlDocumentList.size()>0) {
 						xmlDocument = xmlDocumentList.get(0);
 						if (xmlDocument.getToken() != null && xmlDocument.getToken().isAuthorised() ) {
@@ -295,11 +318,7 @@ public class UploadService {
 						
 					if (isValidSignature(arrayOutputStream)) {
 						
-						String emailNode = eElement.getElementsByTagName("email").item(0).getTextContent();
-						String[] emailNodeList = null;
-						if (emailNode != null) {
-							emailNodeList = emailNode.split(";");
-						}
+						
 						xmlDocument.setStatus("Valid");
 						EmailVM emailVM = new EmailVM();
 						UUID idOne = UUID.randomUUID();
@@ -312,13 +331,8 @@ public class UploadService {
 						if (!infoVM.isAuthorised())
 						 sendEmail.sendEmail(emailVM);
 
-						if(eElement.getElementsByTagName("CNPJ").item(0) != null) {
-							token.setDocument(eElement.getElementsByTagName("CNPJ").item(0).getTextContent());
-							xmlDocument.setDocument(eElement.getElementsByTagName("CNPJ").item(0).getTextContent());
-						} else if(eElement.getElementsByTagName("CPF").item(0) != null) {
-							token.setDocument(eElement.getElementsByTagName("CPF").item(0).getTextContent());
-							xmlDocument.setDocument(eElement.getElementsByTagName("CPF").item(0).getTextContent());
-						}
+						token.setDocument(document);
+						xmlDocument.setDocument(document);
 
 						token.setRecipient(eElement.getElementsByTagName("xNome").item(0).getTextContent());
 						token.setCreatedAt(new Date());

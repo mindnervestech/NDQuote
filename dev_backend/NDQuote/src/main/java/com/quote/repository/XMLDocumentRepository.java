@@ -12,5 +12,5 @@ import com.quote.entities.auth.AuthUser;
 public interface XMLDocumentRepository extends JpaRepository<XMLDocument, Long>{
 	List<XMLDocument> findByUser(AuthUser user); 
 	List<XMLDocument> findByInfNFeId(String infNFeId); 
-	
+	List<XMLDocument> findByDocumentAndEmail(String document,String email);
 }
